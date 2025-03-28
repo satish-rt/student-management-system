@@ -189,3 +189,57 @@ class EditResultForm(FormSettings):
     class Meta:
         model = StudentResult
         fields = ['session_year', 'subject', 'student', 'test', 'exam']
+
+
+class StudentRegistrationForm(forms.Form):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
+    )
+    first_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'})
+    )
+    last_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'})
+    )
+    gender = forms.ChoiceField(
+        choices=[('M', 'Male'), ('F', 'Female')],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    address = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Address', 'rows': 3})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
+    )
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm Password'})
+    )
+    profile_pic = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'custom-file-input'})
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email').lower()
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email is already registered")
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if password and confirm_password and password != confirm_password:
+            raise forms.ValidationError("Passwords do not match")
+        return cleaned_data
+
+    def __init__(self, *args, **kwargs):
+        super(StudentRegistrationForm, self).__init__(*args, **kwargs)
+        for field in self.fields:
+            if field.name not in ['profile_pic']:
+                field.widget.attrs.update({'class': 'form-control'})
+            if field.name == 'address':
+                field.widget.attrs.update({'rows': 3})

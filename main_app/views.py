@@ -5,11 +5,40 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render, reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import FileSystemStorage
+from .forms import StudentRegistrationForm
+from .models import Attendance, Session, Subject, CustomUser, Student
 
 from .EmailBackend import EmailBackend
-from .models import Attendance, Session, Subject
 
 # Create your views here.
+
+
+def admin_login(request):
+    if request.user.is_authenticated:
+        if request.user.user_type == '1':
+            return redirect(reverse("admin_home"))
+        else:
+            return redirect(reverse("login_page"))
+    return render(request, 'main_app/admin_login.html')
+
+
+def staff_login(request):
+    if request.user.is_authenticated:
+        if request.user.user_type == '2':
+            return redirect(reverse("staff_home"))
+        else:
+            return redirect(reverse("login_page"))
+    return render(request, 'main_app/staff_login.html')
+
+
+def student_login(request):
+    if request.user.is_authenticated:
+        if request.user.user_type == '3':
+            return redirect(reverse("student_home"))
+        else:
+            return redirect(reverse("login_page"))
+    return render(request, 'main_app/student_login.html')
 
 
 def login_page(request):
@@ -27,27 +56,11 @@ def doLogin(request, **kwargs):
     if request.method != 'POST':
         return HttpResponse("<h4>Denied</h4>")
     else:
-        #Google recaptcha
-        captcha_token = request.POST.get('g-recaptcha-response')
-        captcha_url = "https://www.google.com/recaptcha/api/siteverify"
-        captcha_key = "6LfswtgZAAAAABX9gbLqe-d97qE2g1JP8oUYritJ"
-        data = {
-            'secret': captcha_key,
-            'response': captcha_token
-        }
-        # Make request
-        try:
-            captcha_server = requests.post(url=captcha_url, data=data)
-            response = json.loads(captcha_server.text)
-            if response['success'] == False:
-                messages.error(request, 'Invalid Captcha. Try Again')
-                return redirect('/')
-        except:
-            messages.error(request, 'Captcha could not be verified. Try Again')
-            return redirect('/')
-        
-        #Authenticate
-        user = EmailBackend.authenticate(request, username=request.POST.get('email'), password=request.POST.get('password'))
+        user = EmailBackend.authenticate(
+            request,
+            username=request.POST.get('email'),
+            password=request.POST.get('password')
+        )
         if user != None:
             login(request, user)
             if user.user_type == '1':
@@ -57,9 +70,8 @@ def doLogin(request, **kwargs):
             else:
                 return redirect(reverse("student_home"))
         else:
-            messages.error(request, "Invalid details")
+            messages.error(request, "Invalid Login Details")
             return redirect("/")
-
 
 
 def logout_user(request):
@@ -124,3 +136,45 @@ messaging.setBackgroundMessageHandler(function (payload) {
 });
     """
     return HttpResponse(data, content_type='application/javascript')
+
+
+def student_registration(request):
+    if request.user.is_authenticated:
+        return redirect(reverse('login_page'))
+    
+    form = StudentRegistrationForm(request.POST or None, request.FILES or None)
+    context = {'form': form, 'page_title': 'Student Registration'}
+    
+    if request.method == 'POST':
+        if form.is_valid():
+            try:
+                # Create user
+                user = CustomUser.objects.create_user(
+                    email=form.cleaned_data['email'],
+                    password=form.cleaned_data['password'],
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name'],
+                    user_type='3',  # Student type
+                    gender=form.cleaned_data['gender'],
+                    address=form.cleaned_data['address']
+                )
+                
+                # Handle profile picture
+                if 'profile_pic' in request.FILES:
+                    fs = FileSystemStorage()
+                    filename = fs.save(request.FILES['profile_pic'].name, request.FILES['profile_pic'])
+                    user.profile_pic = fs.url(filename)
+                    user.save()
+                
+                # Create Student instance
+                Student.objects.create(admin=user)
+                
+                messages.success(request, "Registration successful! Please wait for admin approval.")
+                return redirect(reverse('login_page'))
+            except Exception as e:
+                messages.error(request, f"Registration failed: {str(e)}")
+        else:
+            for field in form.errors:
+                messages.error(request, f"{field}: {form.errors[field][0]}")
+    
+    return render(request, 'main_app/student_registration.html', context)

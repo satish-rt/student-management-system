@@ -1,0 +1,244 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Student Management System | Student Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f4f6f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
+        .register-box {
+            width: 600px;
+            margin: 20px auto;
+        }
+
+        .register-logo {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .register-logo a {
+            color: #495057;
+            font-size: 28px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .register-logo img {
+            width: 60px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .register-card-body {
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        .register-box-msg {
+            color: var(--secondary-color);
+            font-size: 16px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-control {
+            height: 45px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+        }
+
+        textarea.form-control {
+            height: auto;
+            min-height: 100px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group-text {
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            color: var(--secondary-color);
+        }
+
+        .btn-primary {
+            height: 45px;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .alert {
+            border-radius: 8px;
+            font-size: 14px;
+            padding: 12px 20px;
+        }
+
+        .mb-1 {
+            margin: 20px 0 0;
+            text-align: center;
+        }
+
+        .mb-1 a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .mb-1 a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .custom-file-input:focus~.custom-file-label {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+        }
+
+        .custom-file-label {
+            height: 45px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+
+        .custom-file-label::after {
+            height: 43px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .errorlist {
+            color: #dc3545;
+            font-size: 13px;
+            list-style: none;
+            padding: 5px 0;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body class="hold-transition register-page">
+    <div class="register-box">
+        <div class="register-logo">
+            <img src="{% static 'dist/img/AdminLTELogo.png' %}" alt="Logo">
+            <a href="/"><b>Student</b>Registration</a>
+        </div>
+        <div class="card">
+            <div class="card-body register-card-body">
+                <p class="register-box-msg">Create your student account</p>
+                {% if messages %}
+                <div class="col-12">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="input-group">
+                        {% if field.name == 'profile_pic' %}
+                        <div class="custom-file">
+                            {{ field }}
+                            <label class="custom-file-label" for="{{ field.id_for_label }}">Choose profile picture</label>
+                        </div>
+                        {% else %}
+                        {{ field }}
+                        {% if field.name == 'email' %}
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-envelope"></span>
+                            </div>
+                        </div>
+                        {% elif field.name == 'password' or field.name == 'confirm_password' %}
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% if field.errors %}
+                    <div class="errorlist">
+                        {{ field.errors }}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary btn-block">Register</button>
+                        </div>
+                    </div>
+                </form>
+                <p class="mb-1">
+                    Already have an account? <a href="{% url 'login_page' %}">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'dist/js/adminlte.min.js' %}"></script>
+    <script>
+        // Update custom file input label with selected filename
+        $(document).on('change', '.custom-file-input', function() {
+            let fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        });
+    </script>
+</body>
+</html> 
